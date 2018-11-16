@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html prefix="og: http://ogp.me/ns#">
+
+<!-- twitter card --><meta name="twitter:title" content="A piano that woofs | Keybork"><meta name="twitter:description" content="From the portfolio of Corey Austin, digital strategist and creative technologist."><meta name="twitter:image" content="http://caust.in/keybork/share.jpg"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@CoreyAustinHere"><meta name="twitter:creator" content="@CoreyAustinHere"><!-- facebook --><meta prefix="og: http://ogp.me/ns#" property="og:title" content="A piano that woofs | Keybork"><meta prefix="og: http://ogp.me/ns#" property="og:description" content="From the portfolio of Corey Austin, digital strategist and creative technologist."><meta prefix="og: http://ogp.me/ns#" property="og:image" content="http://caust.in/keybork/share.jpg"><meta prefix="og: http://ogp.me/ns#" property="og:image:width" content="1400"><meta prefix="og: http://ogp.me/ns#" property="og:image:height" content="700"><meta prefix="og: http://ogp.me/ns#" property="og:site_name" content="Corey Austin"><meta prefix="og: http://ogp.me/ns#" property="og:url" content="http://caust.in/keybork/"><meta prefix="og: http://ogp.me/ns#" property="og:type" content="website">
+
+<head>
+
+<style>
+body{
+	margin:0;
+	overflow:hidden;
+}
+
+
+</style>
+</head>
+<body>
+
+<canvas></canvas>
+
+</div>
+
+
+
+
+<script>
+
+
+window.onload = init;
+var context;
+var source1buffer;
+var mod=0;
+var filtered;
+var canvas = document.getElementsByTagName('canvas')[0];
+var ctx;
+var animator=0;
+var hue = 0;
+var light = 0;
+var bgalpha = 0;
+
+window.requestAnimFrame = (function(){
+  return  window.requestAnimationFrame       || 
+          window.webkitRequestAnimationFrame || 
+          window.mozRequestAnimationFrame    || 
+          window.oRequestAnimationFrame      || 
+          window.msRequestAnimationFrame     || 
+          function( callback ){
+            window.setTimeout(callback, 1000 / 60);
+          };
+})();
+
+
+//BufferLoader
+
+function loadDogSound() {
+  var request = new XMLHttpRequest();
+  request.open('GET', "yamahabass.wav", true);
+  request.responseType = 'arraybuffer';
+
+  // Decode asynchronously
+  request.onload = function() {
+    context.decodeAudioData(request.response, function(buffer) {
+      source1buffer = buffer;
+    });
+  }
+  request.send();
+
+}
+
+//ENDBUFFERLOADER
+
+
+// Fix up prefixing
+function playSound(buffer,rate) {
+  var source = context.createBufferSource(); // creates a sound source
+  source.buffer = buffer;                    // tell the source which sound to play
+
+  //filter if it's turned on
+  if (filtered){
+  	// Create the filter
+	var filter = context.createBiquadFilter();
+	// Create the audio graph.
+	source.connect(filter);
+	filter.connect(context.destination);
+	// Create and specify parameters for the low-pass filter.
+	filter.type = 'lowpass'; // Low-pass filter. See BiquadFilterNode docs
+	filter.frequency.value = 840; // Set cutoff to 440 HZ
+  }
+  else if (!filtered){
+  	source.connect(context.destination);       // connect the source to the context's destination (the speakers)
+  }
+
+  //modify pitch by changing playback speed (dirty af)
+  source.playbackRate.value = rate;
+
+  source.start(0);                           // play the source now
+                                             // note: on older systems, may have to use deprecated noteOn(time);
+}
+
+function init() {
+  //AUDIO STUFF INITALIZED
+  window.AudioContext = window.AudioContext || window.webkitAudioContext;
+  context = new AudioContext();
+  loadDogSound(); 
+
+  //VIDEO STUFF INITIALIZED
+	canvas.width = window.innerWidth;
+	canvas.height = window.innerHeight;
+	canvas.style.backgroundColor="rgb(0,0,0)";
+	ctx = canvas.getContext('2d');
+  //LOAD IMAGES
+  window.gabe0 = new Image();
+  window.gabe0.src = 'gabe0.png';
+  window.gabe1 = new Image();
+  window.gabe1.src = 'gabe1.png';
+  window.gabe2 = new Image();
+  window.gabe2.src = 'gabe2.png';
+
+  window.keyb = new Image();
+  window.keyb.src = 'keyb.png';
+
+  loop();
+}
+
+function loop() {
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+	//random color backgrounds
+	var pupper = 255-(light+hue);
+	ctx.fillStyle="rgba("+light+","+hue+","+pupper+","+bgalpha+")";
+	if (bgalpha>0){
+		bgalpha=bgalpha-0.01; //fades over time
+	}
+
+	ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(window.keyb,0,0,window.keyb.width,window.keyb.height);
+	if (animator==0){
+		ctx.drawImage(window.gabe0, (canvas.width/2)-(window.gabe0.width/2), (canvas.height/2)-(window.gabe0.height/2), window.gabe0.width, window.gabe0.height);
+	}
+	else if (animator>0&&animator<3){
+		ctx.drawImage(window.gabe1, (canvas.width/2)-(window.gabe0.width/2), (canvas.height/2)-(window.gabe0.height/2), window.gabe0.width, window.gabe0.height);
+		animator++;
+	}
+	else if (animator>2&&animator<5){
+		ctx.drawImage(window.gabe2, (canvas.width/2)-(window.gabe0.width/2), (canvas.height/2)-(window.gabe0.height/2), window.gabe0.width, window.gabe0.height);
+		animator++;
+	}
+	else if (animator>4&&animator<7){
+		ctx.drawImage(window.gabe1, (canvas.width/2)-(window.gabe0.width/2), (canvas.height/2)-(window.gabe0.height/2), window.gabe0.width, window.gabe0.height);
+		animator++;
+	}
+	else if (animator>6){
+		ctx.drawImage(window.gabe0, (canvas.width/2)-(window.gabe0.width/2), (canvas.height/2)-(window.gabe0.height/2), window.gabe0.width, window.gabe0.height);
+		animator=0;
+	}
+		    requestAnimFrame( loop );
+}
+
+
+function handleStart(e){
+	var rate = 100;
+	switch (e.key){
+		case "a":
+			 rate = 0.75+mod; animator=1;
+			break;
+		case "w":
+			rate = 0.80+mod; animator=1;
+			break;
+		case "s":
+			rate = 0.85+mod; animator=1;
+			break;
+		case "e":
+			rate = 0.90+mod; animator=1;
+			break;
+		case "d":
+			rate = 0.95+mod; animator=1;
+			break;
+		case "f":
+			rate = 1.0+mod; animator=1;
+			break;
+		case "t":
+			rate = 1.05+mod; animator=1;
+			break;
+		case "g":
+			rate = 1.10+mod; animator=1;
+			break;
+		case "y":
+			rate = 1.16+mod; animator=1;
+			break;
+		case "h":
+			rate = 1.23+mod; animator=1;
+			break;
+		case "u":
+			rate = 1.34+mod; animator=1;
+			break;
+		case "j":
+			rate = 1.4+mod; animator=1;
+			break;
+		case "k":
+			rate = 1.52+mod; animator=1;
+			break;
+		case "o":
+			rate = 1.6+mod; animator=1;
+			break;
+		case "l":
+			rate = 1.7+mod; animator=1;
+			break;
+		case "p":
+			rate = 1.8+mod; animator=1;
+			break;
+		case ";":
+			rate = 1.9+mod; animator=1;
+			break;
+		case "'":
+			rate = 2+mod; animator=1;
+			break;
+		case "=":
+			mod +=0.02;
+			break;
+		case "-":
+			mod -=0.02;
+			break;
+		case " ":
+			filtered=!filtered;
+			break;
+	}
+	console.log(e.key);
+	playSound(source1buffer,rate);
+
+	//make a random color background
+	light = Math.floor(Math.random() * 255);
+	hue = Math.floor(Math.random() * 255);
+	bgalpha = 1;
+	console.log('ideed '+light);
+	console.log('ideed '+hue);
+}
+
+function handleEnd(key){
+}
+
+//Keypress and touch listeners
+window.addEventListener("keydown", function(e){
+  	e.preventDefault();
+  	handleStart(e);
+  }, false);
+  window.addEventListener("keyup", function(e){
+  	e.preventDefault();
+  	handleEnd(e);
+  }, false);
+
+
+</script>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-87593204-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-97004530-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+</body>
+</html>
